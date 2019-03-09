@@ -1,0 +1,64 @@
+$borderWidth: 2px;
+
+.element-wrapper {
+  position: absolute;
+  //background-color: red;
+  cursor: pointer;
+  padding: $borderWidth;
+
+  &.selected {
+    padding: 0;
+    border: black $borderWidth dashed;
+
+    .close{
+      display: initial;
+    }
+
+    .scale{
+      display: initial;
+    }
+  }
+
+  .element {
+    font-size: 100px;
+    width: 100px;
+    height: 10px;
+  }
+
+  .close {
+    $iconSize: 20px;
+
+    position: absolute;
+    font-size: 20px;
+    top: -$iconSize - 5;
+    right: -$iconSize - 5;
+    z-index: 10;
+
+    display: none;
+  }
+
+  .scale {
+    $iconSize: 10px;
+
+    position: absolute;
+    display: none;
+    font-size: $iconSize;
+
+    &.top-left{
+      top: -$iconSize/2;
+      left: -$iconSize/2;
+    }
+    &.bottom-left{
+      bottom: -$iconSize/2;
+      left: -$iconSize/2;
+    }
+    &.top-right{
+      top: -$iconSize/2;
+      right: -$iconSize/2;
+    }
+    &.bottom-right{
+      bottom: -$iconSize/2;
+      right: -$iconSize/2;
+    }
+  }
+}

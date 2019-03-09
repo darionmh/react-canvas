@@ -1,10 +1,14 @@
 import React from "react"
+import moment from "moment"
+import {removeElement, selectedElement, setSelectedElement} from "../reducers/editor";
+import connect from "react-redux/es/connect/connect";
 
-class Trackable extends React.Component{
+class ElementWrapper extends React.Component{
     constructor(props) {
         super(props);
 
         this.onClick = this.onClick.bind(this);
+        this.onDoubleClick = this.onDoubleClick.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
         this.onMouseDown = this.onMouseDown.bind(this);
@@ -20,7 +24,8 @@ class Trackable extends React.Component{
             dY: 0,
             x: props.x,
             y: props.y,
-            isTracking: false
+            isTracking: false,
+            mouseDown: 0,
         }
     }
 
@@ -30,7 +35,10 @@ class Trackable extends React.Component{
 
     onClick(e){
         e.stopPropagation();
-        this.props.onClick()
+    }
+
+    onDoubleClick(e){
+        this.props.removeElement(this.props.id)
     }
 
     onMouseMove(e){
@@ -64,9 +72,11 @@ class Trackable extends React.Component{
             startClientX: e.clientX,
             startClientY: e.clientY,
             isTracking: true,
-            isSelected: true
+            mouseDown: moment()
         }, () => {
             window.addEventListener('mousemove', this.onMouseMove, false)
+            if(this.props.selectedElement !== this.props.id)
+                this.props.selectElement(this.props.id)
         })
     }
 
@@ -86,7 +96,6 @@ class Trackable extends React.Component{
         let {x, y, dX, dY} = this.state
 
         return {
-            position: "absolute",
             top: `${y + dY}px`,
             left: `${x + dX}px`
         }
@@ -94,9 +103,12 @@ class Trackable extends React.Component{
 
     render() {
         let style = this.getStyle()
+        let className = "element-wrapper"
+        if(this.props.selectedElement === this.props.id)
+            className += " selected"
 
         return (
-            <div style={style} onClick={this.onClick} onDoubleClick={this.props.remove} onMouseDown={this.onMouseDown} onMouseUp={(this.onMouseUp)}>
+            <div className={className} style={style} onClick={this.onClick} onDoubleClick={this.onDoubleClick} onMouseDown={this.onMouseDown} onMouseUp={(this.onMouseUp)}>
                 {this.props.children}
             </div>
         );
@@ -104,10 +116,18 @@ class Trackable extends React.Component{
 }
 
 export const defaultStyle = {
-    height: "50px",
-    width: "50px",
-    backgroundColor: "red",
-    cursor: "pointer"
+    height: "100px",
+    width: "100px",
+
 }
 
-export default Trackable
+const mapStateToProps = (state) => ({
+    selectedElement: selectedElement(state)
+})
+
+const mapDispatchToProps = (dispatch) => ({
+    selectElement: (id) => dispatch(setSelectedElement(id)),
+    removeElement: (id) => dispatch(removeElement(id))
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(ElementWrapper);

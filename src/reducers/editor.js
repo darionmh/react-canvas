@@ -5,9 +5,9 @@ export const setSelectedElement = (id) => ({
 })
 
 const ADD_ELEMENT = "ADD_ELEMENT"
-export const addElement = (element) => ({
+export const addElement = (id, x, y) => ({
     type: ADD_ELEMENT,
-    element
+    id, x, y
 })
 
 const REMOVE_ELEMENT = "REMOVE_ELEMENT"
@@ -24,7 +24,11 @@ const initState = {
 export const editor = (state = initState, action) => {
     switch (action.type) {
         case SET_SELECTED_ELEMENT: return {...state, selectedElement: action.id}
-        case ADD_ELEMENT: return {...state, elements: [...state.elements, action.element]}
+        case ADD_ELEMENT:
+            return {...state,
+                elements: [...state.elements, {id: action.id, x: action.x, y: action.y}],
+                setSelectedElement: action.id
+            }
         case REMOVE_ELEMENT: return {...state, elements: state.elements.filter(e=>e.id !== action.id)}
         default: return state;
     }
