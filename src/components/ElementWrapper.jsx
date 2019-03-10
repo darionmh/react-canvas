@@ -1,6 +1,6 @@
 import React from "react"
 import moment from "moment"
-import {removeElement, selectedElement, setSelectedElement} from "../reducers/editor";
+import {removeElement, selectedElement, setSelectedElement, updateElement} from "../reducers/editor";
 import connect from "react-redux/es/connect/connect";
 
 class ElementWrapper extends React.Component{
@@ -8,7 +8,7 @@ class ElementWrapper extends React.Component{
         super(props);
 
         this.onClick = this.onClick.bind(this);
-        this.onDoubleClick = this.onDoubleClick.bind(this);
+        this.removeElement = this.removeElement.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onMouseLeave = this.onMouseLeave.bind(this);
         this.onMouseDown = this.onMouseDown.bind(this);
@@ -18,12 +18,12 @@ class ElementWrapper extends React.Component{
         this.getStyle = this.getStyle.bind(this);
 
         this.state = {
-            startClientX: 0,
-            startClientY: 0,
-            dX: 0,
-            dY: 0,
-            x: props.x,
-            y: props.y,
+            dX: 0, //difference of clientX and element wrapper x
+            dY: 0, //difference of clientY and element wrapper y
+            x: props.x, //x of client
+            y: props.y, //y of client
+            height: props.height,
+            width: props.width,
             isTracking: false,
             mouseDown: 0,
         }
@@ -33,26 +33,40 @@ class ElementWrapper extends React.Component{
         window.removeEventListener('mousemove', this.onMouseMove, false)
     }
 
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.x !== this.state.x || nextProps.y !== this.state.y)
+            this.setState({
+                x: nextProps.x,
+                y: nextProps.y,
+                height: nextProps.height,
+                width: nextProps.width
+            })
+    }
+
+
     onClick(e){
         e.stopPropagation();
     }
 
-    onDoubleClick(e){
+    removeElement(){
         this.props.removeElement(this.props.id)
     }
 
     onMouseMove(e){
-        if(this.state.isTracking) {
+        let {dX, dY} = this.state
+        if(this.state.isTracking && e.buttons > 0) {
             this.setState({
-                dX: (e.clientX - this.state.startClientX),
-                dY: (e.clientY - this.state.startClientY)
+                x: (e.clientX - dX),
+                y: (e.clientY - dY)
             })
+        }else{
+            this.stopTracking(e)
         }
     }
 
-    onMouseLeave(){
+    onMouseLeave(e){
         console.debug("leave")
-        this.stopTracking()
+        this.stopTracking(e)
     }
 
     onMouseDown(e){
@@ -64,13 +78,17 @@ class ElementWrapper extends React.Component{
     onMouseUp(e){
         console.debug("up")
         e.stopPropagation()
-        this.stopTracking()
+        this.stopTracking(e)
     }
 
     startTracking(e){
+        let dX = e.clientX - this.props.x
+        let dY = e.clientY - this.props.y
         this.setState({
-            startClientX: e.clientX,
-            startClientY: e.clientY,
+            dX,
+            dY,
+            x: e.clientX - dX,
+            y: e.clientY - dY,
             isTracking: true,
             mouseDown: moment()
         }, () => {
@@ -80,24 +98,30 @@ class ElementWrapper extends React.Component{
         })
     }
 
-    stopTracking(){
-        let {x, y, dX, dY} = this.state
+    stopTracking(e){
+        let {x, y, dX, dY, height, width} = this.state
 
         this.setState({
-            x: x+dX,
-            y: y+dY,
+            x: e.clientX-dX,
+            y: e.clientY-dY,
             dX: 0,
             dY: 0,
             isTracking: false
-        }, () => window.removeEventListener('mousemove', this.onMouseMove, false))
+        }, () => {
+            if(this.props.x !== this.state.x ||  this.props.y !== this.state.y)
+                this.props.updateElement(this.props.id, this.state.x, this.state.y, height, width)
+            window.removeEventListener('mousemove', this.onMouseMove, false)
+        })
     }
 
     getStyle(){
-        let {x, y, dX, dY} = this.state
+        let {x, y, dX, dY, height, width} = this.state
 
         return {
-            top: `${y + dY}px`,
-            left: `${x + dX}px`
+            top: `${y}px`,
+            left: `${x}px`,
+            height: `${height}px`,
+            width: `${width}px`
         }
     }
 
@@ -108,17 +132,16 @@ class ElementWrapper extends React.Component{
             className += " selected"
 
         return (
-            <div className={className} style={style} onClick={this.onClick} onDoubleClick={this.onDoubleClick} onMouseDown={this.onMouseDown} onMouseUp={(this.onMouseUp)}>
+            <div className={className} style={style} onClick={this.onClick} onMouseDown={this.onMouseDown} onMouseUp={(this.onMouseUp)}>
                 {this.props.children}
+                <i className="close far fa-times-circle" onClick={this.removeElement}/>
+                <i className="scale bottom-left fas fa-circle"/>
+                <i className="scale bottom-right fas fa-circle"/>
+                <i className="scale top-left fas fa-circle"/>
+                <i className="scale top-right fas fa-circle"/>
             </div>
         );
     }
-}
-
-export const defaultStyle = {
-    height: "100px",
-    width: "100px",
-
 }
 
 const mapStateToProps = (state) => ({
@@ -127,7 +150,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
     selectElement: (id) => dispatch(setSelectedElement(id)),
-    removeElement: (id) => dispatch(removeElement(id))
+    removeElement: (id) => dispatch(removeElement(id)),
+    updateElement: (id, x, y, height, width) => dispatch(updateElement(id, x, y, height, width))
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(ElementWrapper);

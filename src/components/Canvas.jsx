@@ -1,6 +1,6 @@
 import React from "react";
 import ElementWrapper, {defaultStyle} from "./ElementWrapper";
-import {elements, removeElement, selectedElement, setSelectedElement} from "../reducers/editor";
+import {elements, removeElement, selectedElement, setSelectedElement, updateElement} from "../reducers/editor";
 import connect from "react-redux/es/connect/connect";
 
 class Canvas extends React.Component{
@@ -12,13 +12,8 @@ class Canvas extends React.Component{
 
     createChild(id, x, y){
         return (
-            <ElementWrapper key={id} id={id} x={x} y={y}>
-                <i className="element fas fa-angry" style={defaultStyle}/>
-                <i className="close far fa-times-circle"/>
-                <i className="scale bottom-left fas fa-circle"/>
-                <i className="scale bottom-right fas fa-circle"/>
-                <i className="scale top-left fas fa-circle"/>
-                <i className="scale top-right fas fa-circle"/>
+            <ElementWrapper key={id} id={id} x={x} y={y} height={100} width={100}>
+                <i className="element fas fa-angry"/>
             </ElementWrapper>
         )
     }
@@ -47,7 +42,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
     removeElement: (id) => dispatch(removeElement(id)),
-    selectElement: (id) => dispatch(setSelectedElement(id))
+    selectElement: (id) => dispatch(setSelectedElement(id)),
+    updateElement: (id, x, y, height, width) => dispatch(updateElement(id, x, y, height, width))
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Canvas);

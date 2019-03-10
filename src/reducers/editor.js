@@ -5,15 +5,21 @@ export const setSelectedElement = (id) => ({
 })
 
 const ADD_ELEMENT = "ADD_ELEMENT"
-export const addElement = (id, x, y) => ({
+export const addElement = (id, x, y, height, width) => ({
     type: ADD_ELEMENT,
-    id, x, y
+    id, x, y, height, width
 })
 
 const REMOVE_ELEMENT = "REMOVE_ELEMENT"
 export const removeElement = (id) => ({
     type: REMOVE_ELEMENT,
     id
+})
+
+const UPDATE_ELEMENT = "UPDATE_ELEMENT"
+export const updateElement = (id, x, y, height, width) => ({
+    type: UPDATE_ELEMENT,
+    id, x, y, height, width
 })
 
 const initState = {
@@ -30,6 +36,12 @@ export const editor = (state = initState, action) => {
                 setSelectedElement: action.id
             }
         case REMOVE_ELEMENT: return {...state, elements: state.elements.filter(e=>e.id !== action.id)}
+        case UPDATE_ELEMENT:
+            return {...state, elements: state.elements.map(e=>{
+                if(e.id === action.id)
+                    return {...e, x: action.x, y: action.y, height: action.height, width: action.width}
+                return e
+            })}
         default: return state;
     }
 }
